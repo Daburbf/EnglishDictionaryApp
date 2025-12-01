@@ -87,7 +87,7 @@ public class CalculatorPanel extends JPanel {
         buttonPanel.setBackground(Constants.BACKGROUND_COLOR);
         
         String[] buttons = {
-            "C", "⌫", "%", "/",
+            "C", "Hapus", "%", "/",
             "7", "8", "9", "*",
             "4", "5", "6", "-",
             "1", "2", "3", "+",
@@ -144,7 +144,7 @@ public class CalculatorPanel extends JPanel {
                     newInput = true;
                     break;
                     
-                case "⌫":
+                case "Hapus":
                     if (currentInput.length() > 0) {
                         currentInput = currentInput.substring(0, currentInput.length() - 1);
                         display.setText(currentInput.isEmpty() ? "0" : currentInput);

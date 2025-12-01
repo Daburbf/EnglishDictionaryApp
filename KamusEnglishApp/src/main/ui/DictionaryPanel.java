@@ -1,384 +1,261 @@
 package main.ui;
 
+import main.ui.components.BlurEffect;
+import main.ui.components.CorruptionPopup;
+import main.ui.components.ExplosionEffect;
+import main.model.Dictionary;
+import main.model.Word;
+import main.model.RedBlackTree;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-class RBTNode {
-    String key;
-    String value;
-    RBTNode left, right, parent;
-    boolean color;
-
-    public RBTNode(String key, String value) {
-        this.key = key;
-        this.value = value;
-        this.color = true;
-        this.left = this.right = this.parent = null;
-    }
-}
-
-class RBTree {
-    private RBTNode root;
-    private final RBTNode NIL;
-
-    public RBTree() {
-        NIL = new RBTNode("", "");
-        NIL.color = false;
-        root = NIL;
-    }
-
-    public void insert(String key, String value) {
-        RBTNode node = new RBTNode(key, value);
-        node.left = NIL;
-        node.right = NIL;
-        
-        RBTNode parent = null;
-        RBTNode current = root;
-
-        while (current != NIL) {
-            parent = current;
-            if (key.compareTo(current.key) < 0) {
-                current = current.left;
-            } else {
-                current = current.right;
-            }
-        }
-
-        node.parent = parent;
-        if (parent == null) {
-            root = node;
-        } else if (key.compareTo(parent.key) < 0) {
-            parent.left = node;
-        } else {
-            parent.right = node;
-        }
-
-        if (node.parent == null) {
-            node.color = false;
-            return;
-        }
-
-        if (node.parent.parent == null) {
-            return;
-        }
-
-        fixInsert(node);
-    }
-
-    private void fixInsert(RBTNode node) {
-        while (node.parent != null && node.parent.color) {
-            if (node.parent == node.parent.parent.right) {
-                RBTNode uncle = node.parent.parent.left;
-                if (uncle.color) {
-                    uncle.color = false;
-                    node.parent.color = false;
-                    node.parent.parent.color = true;
-                    node = node.parent.parent;
-                } else {
-                    if (node == node.parent.left) {
-                        node = node.parent;
-                        rightRotate(node);
-                    }
-                    node.parent.color = false;
-                    node.parent.parent.color = true;
-                    leftRotate(node.parent.parent);
-                }
-            } else {
-                RBTNode uncle = node.parent.parent.right;
-                if (uncle.color) {
-                    uncle.color = false;
-                    node.parent.color = false;
-                    node.parent.parent.color = true;
-                    node = node.parent.parent;
-                } else {
-                    if (node == node.parent.right) {
-                        node = node.parent;
-                        leftRotate(node);
-                    }
-                    node.parent.color = false;
-                    node.parent.parent.color = true;
-                    rightRotate(node.parent.parent);
-                }
-            }
-            if (node == root) break;
-        }
-        root.color = false;
-    }
-
-    private void leftRotate(RBTNode node) {
-        RBTNode rightChild = node.right;
-        node.right = rightChild.left;
-        
-        if (rightChild.left != NIL) {
-            rightChild.left.parent = node;
-        }
-        
-        rightChild.parent = node.parent;
-        
-        if (node.parent == null) {
-            root = rightChild;
-        } else if (node == node.parent.left) {
-            node.parent.left = rightChild;
-        } else {
-            node.parent.right = rightChild;
-        }
-        
-        rightChild.left = node;
-        node.parent = rightChild;
-    }
-
-    private void rightRotate(RBTNode node) {
-        RBTNode leftChild = node.left;
-        node.left = leftChild.right;
-        
-        if (leftChild.right != NIL) {
-            leftChild.right.parent = node;
-        }
-        
-        leftChild.parent = node.parent;
-        
-        if (node.parent == null) {
-            root = leftChild;
-        } else if (node == node.parent.right) {
-            node.parent.right = leftChild;
-        } else {
-            node.parent.left = leftChild;
-        }
-        
-        leftChild.right = node;
-        node.parent = leftChild;
-    }
-
-    public String search(String key) {
-        return searchRecursive(root, key);
-    }
-
-    private String searchRecursive(RBTNode node, String key) {
-        if (node == NIL) return null;
-        
-        if (key.equals(node.key)) {
-            return node.value;
-        }
-        
-        if (key.compareTo(node.key) < 0) {
-            return searchRecursive(node.left, key);
-        } else {
-            return searchRecursive(node.right, key);
-        }
-    }
-}
+import java.util.List;
+import main.ui.components.OldEffect;
+import main.ui.components.MatrixRainEffect;
 
 public class DictionaryPanel extends JPanel {
     private MainFrame mainFrame;
     private JTextArea resultArea;
     private JTextField searchField;
-    private RBTree englishToIndonesianTree;
-    private RBTree indonesianToEnglishTree;
+    private RedBlackTree englishToIndonesianTree;
+    private RedBlackTree indonesianToEnglishTree;
+    private Dictionary dictionaryModel;
     private JPanel contentPanel;
     private CardLayout contentCardLayout;
-
     private JPanel calculatorPanel;
     private JTextField calcDisplay;
     private String currentCalcInput = "";
-
+    private double calcCurrentValue = 0;
+    private String calcCurrentOperator = "";
     private JPanel gamePanel;
     private JLabel gameMessage;
-    private JTextField guessField;
-    private int targetNumber;
-    private int attempts;
-
+    private JLabel coinLabel;
+    private Timer flipTimer;
+    private int flipCount = 0;
+    private final int TOTAL_FLIPS = 20;
     private boolean isEnglishToIndonesian = true;
     private JToggleButton languageToggle;
-    
+    private JButton searchButton;
+    private CorruptionPopup corruptionPopup;
+    private Timer corruptionTimer;
+
     public DictionaryPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
-        this.englishToIndonesianTree = new RBTree();
-        this.indonesianToEnglishTree = new RBTree();
+        this.englishToIndonesianTree = new RedBlackTree();
+        this.indonesianToEnglishTree = new RedBlackTree();
+        this.dictionaryModel = new Dictionary();
         initializeDictionary();
         initializeUI();
+        setupCorruptionEffect();
     }
-    
+
+    private void setupCorruptionEffect() {
+        corruptionPopup = new CorruptionPopup(mainFrame);
+        corruptionTimer = new Timer(8000, e -> {
+            try {
+                corruptionPopup.hidePopup();
+                java.awt.event.MouseMotionListener[] listeners = mainFrame.getMouseMotionListeners();
+                for (java.awt.event.MouseMotionListener listener : listeners) {
+                    if (listener != null) {
+                        mainFrame.removeMouseMotionListener(listener);
+                    }
+                }
+            } catch (Exception ex) {
+            }
+        });
+        corruptionTimer.setRepeats(false);
+    }
+
+    private void showCorruptionEffect() {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (screenSize.width - corruptionPopup.getWidth()) / 2;
+        int y = (screenSize.height - corruptionPopup.getHeight()) / 2;
+        corruptionPopup.setLocation(x, y);
+        corruptionPopup.showPopup();
+        corruptionTimer.restart();
+        mainFrame.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                corruptionPopup.followCursor(e.getXOnScreen(), e.getYOnScreen());
+            }
+            @Override
+            public void mouseDragged(java.awt.event.MouseEvent e) {
+                corruptionPopup.followCursor(e.getXOnScreen(), e.getYOnScreen());
+            }
+        });
+    }
+
     private void initializeDictionary() {
+        try {
+            List<Word> allWords = dictionaryModel.getAllWords();
+            if (allWords != null) {
+                for (Word word : allWords) {
+                    if (word.getEnglish() != null && word.getIndonesian() != null) {
+                        englishToIndonesianTree.insert(word.getEnglish().toLowerCase(), word.getIndonesian());
+                        indonesianToEnglishTree.insert(word.getIndonesian().toLowerCase(), word.getEnglish());
+                    }
+                }
+            }
+        } catch (Exception ex) {
+        }
 
-        englishToIndonesianTree.insert("hello", "Halo");
-        englishToIndonesianTree.insert("world", "Dunia");
-        englishToIndonesianTree.insert("java", "Bahasa pemrograman Java");
-        englishToIndonesianTree.insert("computer", "Komputer");
-        englishToIndonesianTree.insert("mouse", "Tikus");
-        englishToIndonesianTree.insert("keyboard", "Papan ketik");
-        englishToIndonesianTree.insert("book", "Buku");
-        englishToIndonesianTree.insert("water", "Air");
-        englishToIndonesianTree.insert("fire", "Api");
-        englishToIndonesianTree.insert("earth", "Bumi");
-        englishToIndonesianTree.insert("money", "Uang");
-        englishToIndonesianTree.insert("project", "Proyek");
-        englishToIndonesianTree.insert("tax", "Pajak");
-        englishToIndonesianTree.insert("good", "Baik");
-        englishToIndonesianTree.insert("bad", "Buruk");
-        englishToIndonesianTree.insert("happy", "Senang");
-        englishToIndonesianTree.insert("sad", "Sedih");
-        englishToIndonesianTree.insert("blue", "Biru");
-        englishToIndonesianTree.insert("red", "Merah");
-        englishToIndonesianTree.insert("green", "Hijau");
-
+        englishToIndonesianTree.insert("blur", "Buram, Kabur");
         englishToIndonesianTree.insert("calculator", "Menampilkan kalkulator");
-        englishToIndonesianTree.insert("kalkulator", "Menampilkan kalkulator");
-        englishToIndonesianTree.insert("game", "Memulai game tebak angka");
-        englishToIndonesianTree.insert("permainan", "Memulai game tebak angka");
+        englishToIndonesianTree.insert("game", "Memulai koin flip");
+        englishToIndonesianTree.insert("explosion", "Ledakan, Letusan");
+        englishToIndonesianTree.insert("boom", "Ledakan, Dentuman");
+        englishToIndonesianTree.insert("rain", "Hujan");
+        englishToIndonesianTree.insert("matrix", "Matriks");
+        englishToIndonesianTree.insert("digital", "Digital");
+        englishToIndonesianTree.insert("mouse", "Tikus");
 
-        indonesianToEnglishTree.insert("halo", "Hello");
-        indonesianToEnglishTree.insert("dunia", "World");
-        indonesianToEnglishTree.insert("komputer", "Computer");
+        indonesianToEnglishTree.insert("buram", "Blurry");
+        indonesianToEnglishTree.insert("ledakan", "Explosion");
+        indonesianToEnglishTree.insert("lengkap", "Complete");
+        indonesianToEnglishTree.insert("hujan", "Rain");
+        indonesianToEnglishTree.insert("matriks", "Matrix");
+        indonesianToEnglishTree.insert("digital", "Digital");
         indonesianToEnglishTree.insert("tikus", "Mouse");
-        indonesianToEnglishTree.insert("papan ketik", "Keyboard");
-        indonesianToEnglishTree.insert("buku", "Book");
-        indonesianToEnglishTree.insert("air", "Water");
-        indonesianToEnglishTree.insert("api", "Fire");
-        indonesianToEnglishTree.insert("bumi", "Earth");
-        indonesianToEnglishTree.insert("uang", "Money");
-        indonesianToEnglishTree.insert("proyek", "Project");
-        indonesianToEnglishTree.insert("pajak", "Tax");
-        indonesianToEnglishTree.insert("baik", "Good");
-        indonesianToEnglishTree.insert("buruk", "Bad");
-        indonesianToEnglishTree.insert("senang", "Happy");
-        indonesianToEnglishTree.insert("sedih", "Sad");
-        indonesianToEnglishTree.insert("biru", "Blue");
-        indonesianToEnglishTree.insert("merah", "Red");
-        indonesianToEnglishTree.insert("hijau", "Green");
     }
-    
+
     private void initializeUI() {
         setLayout(new BorderLayout());
-        setBackground(new Color(18, 18, 18));
+        setBackground(new Color(25, 25, 35));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         contentCardLayout = new CardLayout();
         contentPanel = new JPanel(contentCardLayout);
-        contentPanel.setBackground(new Color(18, 18, 18));
+        contentPanel.setBackground(new Color(25, 25, 35));
 
         JPanel dictionaryPanel = createDictionaryPanel();
         calculatorPanel = createCalculatorPanel();
         gamePanel = createGamePanel();
-        
+
         contentPanel.add(dictionaryPanel, "DICTIONARY");
         contentPanel.add(calculatorPanel, "CALCULATOR");
         contentPanel.add(gamePanel, "GAME");
-        
+
         add(contentPanel, BorderLayout.CENTER);
         contentCardLayout.show(contentPanel, "DICTIONARY");
     }
-    
+
     private JPanel createDictionaryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(18, 18, 18));
-        panel.setBorder(new EmptyBorder(15, 0, 0, 0));
+        panel.setBackground(new Color(25, 25, 35));
+        panel.setBorder(new EmptyBorder(10, 0, 0, 0));
 
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(18, 18, 18));
-        headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
+        headerPanel.setBackground(new Color(25, 25, 35));
+        headerPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
 
-        JLabel headerLabel = new JLabel("KAMUS BAHASA");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        headerLabel.setForeground(new Color(52, 152, 219));
+        JLabel headerLabel = new JLabel("DICTIONARY");
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        headerLabel.setForeground(new Color(100, 180, 255));
         headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        headerLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
 
         JPanel togglePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        togglePanel.setBackground(new Color(18, 18, 18));
-        togglePanel.setBorder(new EmptyBorder(5, 0, 0, 0));
+        togglePanel.setBackground(new Color(25, 25, 35));
+        togglePanel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
         languageToggle = new JToggleButton("ENGLISH → INDONESIA");
         languageToggle.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        languageToggle.setBackground(new Color(41, 128, 185));
+        languageToggle.setBackground(new Color(50, 130, 200));
         languageToggle.setForeground(Color.WHITE);
         languageToggle.setFocusPainted(false);
         languageToggle.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
         languageToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
         languageToggle.setSelected(true);
+        isEnglishToIndonesian = true;
 
         languageToggle.addActionListener(e -> {
-            if (languageToggle.isSelected()) {
+            isEnglishToIndonesian = languageToggle.isSelected();
+            if (isEnglishToIndonesian) {
                 languageToggle.setText("ENGLISH → INDONESIA");
-                isEnglishToIndonesian = true;
+                searchButton.setText("SEARCH");
             } else {
                 languageToggle.setText("INDONESIA → ENGLISH");
-                isEnglishToIndonesian = false;
+                searchButton.setText("CAR");
             }
             updateWelcomeMessage();
         });
 
         togglePanel.add(languageToggle);
-
         headerPanel.add(headerLabel, BorderLayout.NORTH);
         headerPanel.add(togglePanel, BorderLayout.SOUTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBackground(new Color(18, 18, 18));
-        centerPanel.setBorder(new EmptyBorder(40, 150, 40, 150));
+        centerPanel.setBackground(new Color(25, 25, 35));
+        centerPanel.setBorder(new EmptyBorder(20, 40, 20, 40));
 
         JPanel searchPanel = new JPanel(new BorderLayout(5, 5));
-        searchPanel.setBackground(new Color(18, 18, 18));
-        searchPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
-        searchPanel.setMaximumSize(new Dimension(400, 45));
-        
+        searchPanel.setBackground(new Color(25, 25, 35));
+        searchPanel.setBorder(new EmptyBorder(0, 0, 12, 0));
+        searchPanel.setMaximumSize(new Dimension(600, 45));
+
         searchField = new JTextField();
-        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        searchField.setBackground(new Color(40, 40, 40));
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchField.setBackground(new Color(40, 40, 50));
         searchField.setForeground(Color.WHITE);
         searchField.setCaretColor(Color.WHITE);
         searchField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(52, 152, 219), 1),
-            BorderFactory.createEmptyBorder(8, 12, 8, 12)
+            BorderFactory.createLineBorder(new Color(80, 160, 240), 1),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
-        
-        JButton searchButton = new JButton("CARI");
-        searchButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        searchButton.setBackground(new Color(41, 128, 185));
+        searchField.setColumns(30);
+
+        searchButton = new JButton("SEARCH");
+        searchButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        searchButton.setBackground(new Color(60, 140, 220));
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
-        searchButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        searchButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
         searchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+        searchButton.setPreferredSize(new Dimension(90, 45));
+
         searchPanel.add(searchField, BorderLayout.CENTER);
         searchPanel.add(searchButton, BorderLayout.EAST);
 
         resultArea = new JTextArea();
         resultArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        resultArea.setBackground(new Color(30, 30, 30));
+        resultArea.setBackground(new Color(35, 35, 45));
         resultArea.setForeground(Color.WHITE);
         resultArea.setEditable(false);
         resultArea.setLineWrap(true);
         resultArea.setWrapStyleWord(true);
         resultArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(60, 60, 60), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            BorderFactory.createLineBorder(new Color(60, 60, 80), 1),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
-        
-        JScrollPane scrollPane = new JScrollPane(resultArea);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setBackground(new Color(30, 30, 30));
-        scrollPane.setPreferredSize(new Dimension(500, 150));
+        resultArea.setRows(4);
+        resultArea.setPreferredSize(new Dimension(150, 40));
+        resultArea.setMaximumSize(new Dimension(Short.MAX_VALUE, 40));
+
+        JPanel resultPanel = new JPanel(new BorderLayout());
+        resultPanel.setBackground(new Color(25, 25, 35));
+        resultPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
+        resultPanel.add(resultArea, BorderLayout.CENTER);
 
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footerPanel.setBackground(new Color(18, 18, 18));
-        footerPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
+        footerPanel.setBackground(new Color(25, 25, 35));
+        footerPanel.setBorder(new EmptyBorder(12, 0, 0, 0));
 
         JButton backButton = new JButton("← Kembali ke Dashboard");
-        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        backButton.setBackground(new Color(60, 60, 60));
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        backButton.setBackground(new Color(60, 60, 80));
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
-        backButton.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        backButton.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         footerPanel.add(backButton);
 
         centerPanel.add(searchPanel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        centerPanel.add(scrollPane);
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        centerPanel.add(resultPanel);
 
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(centerPanel, BorderLayout.CENTER);
@@ -389,302 +266,524 @@ public class DictionaryPanel extends JPanel {
         backButton.addActionListener(e -> mainFrame.showDashboard());
 
         updateWelcomeMessage();
-        
+
         return panel;
     }
 
     private void updateWelcomeMessage() {
         if (isEnglishToIndonesian) {
-            resultArea.setText("Ketik kata dalam bahasa Inggris dan tekan ENTER atau klik tombol CARI.\n\n" +
-                              "Contoh: hello, world, computer, blue, red, green");
+            resultArea.setText("Type the word in English then press ENTER or click the SEARCH button");
         } else {
-            resultArea.setText("Type words in Indonesian and press ENTER or click SEARCH button.\n\n" +
-                              "Examples: halo, dunia, komputer, biru, merah, hijau");
+            resultArea.setText("Ketik kata dalam bahasa Indonesia lalu tekan ENTER atau klik tombol CARI");
         }
     }
-    
-    private void performSearch() {
-        String searchText = searchField.getText().trim().toLowerCase();
-        
-        if (searchText.isEmpty()) {
-            resultArea.setText(isEnglishToIndonesian ? 
-                "Masukkan kata yang ingin dicari..." : 
-                "Enter the word you want to search...");
-            return;
-        }
 
-        switch (searchText) {
-            case "calculator":
-            case "kalkulator":
-                contentCardLayout.show(contentPanel, "CALCULATOR");
-                resultArea.setText("");
-                return;
-                
-            case "game":
-            case "permainan":
-                contentCardLayout.show(contentPanel, "GAME");
-                resultArea.setText("");
-                return;
-                
-            default:
-                String meaning;
+    private void performSearch() {
+        try {
+            String raw = searchField.getText();
+            if (raw == null) raw = "";
+            String searchText = raw.trim().toLowerCase();
+
+            if (searchText.isEmpty()) {
                 if (isEnglishToIndonesian) {
-                    meaning = englishToIndonesianTree.search(searchText);
+                    resultArea.setText("ERROR: Masukkan kata dalam bahasa Inggris");
                 } else {
-                    meaning = indonesianToEnglishTree.search(searchText);
+                    resultArea.setText("ERROR: Masukkan kata dalam bahasa Indonesia");
                 }
-                
-                if (meaning != null) {
-                    displaySearchResult(searchText, meaning);
+                return;
+            }
+
+            if (isEnglishToIndonesian) {
+                if (indonesianToEnglishTree.search(searchText) != null) {
+                    resultArea.setText("ERROR: Mode English → Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia → English");
+                    return;
+                }
+            } else {
+                if (englishToIndonesianTree.search(searchText) != null) {
+                    resultArea.setText("ERROR: Mode Indonesia → English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English → Indonesia");
+                    return;
+                }
+            }
+
+            if (searchText.equals("explosion") || searchText.equals("ledakan") ||
+                searchText.equals("boom") || searchText.equals("complete") ||
+                searchText.equals("finished") || searchText.equals("selesai") ||
+                searchText.equals("master") || searchText.equals("vocab") ||
+                searchText.equals("dictionary") || searchText.equals("kamus")) {
+                ExplosionEffect.triggerExplosion(mainFrame);
+                displayExplosionEffect(searchText);
+                return;
+            }
+
+            if (searchText.equals("mouse") || searchText.equals("tikus")) {
+                showCorruptionEffect();
+                displayCorruptionEffect(searchText);
+                return;
+            }
+
+            if (searchText.equals("blur") || searchText.equals("buram")) {
+                BlurEffect.showBlurEffect(mainFrame);
+                displayBlurEffect(searchText);
+                return;
+            }
+
+            if (searchText.equals("old") || searchText.equals("tua")) { 
+                OldEffect.triggerOldEffect(mainFrame);
+                displayOldEffect(searchText);
+                return;
+            }
+
+            if (searchText.equals("rain") || searchText.equals("hujan")) {
+                MatrixRainEffect.triggerMatrixRain(mainFrame);
+                if (isEnglishToIndonesian && searchText.equals("rain")) {
+                    displaySearchResult("rain", "Hujan");
+                } else if (!isEnglishToIndonesian && searchText.equals("hujan")) {
+                    displaySearchResult("hujan", "Rain");
                 } else {
+                    if (isEnglishToIndonesian) {
+                        resultArea.setText("ERROR: Mode English → Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia → English");
+                    } else {
+                        resultArea.setText("ERROR: Mode Indonesia → English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English → Indonesia");
+                    }
+                }
+                return;
+            }
+
+            switch (searchText) {
+                case "calculator":
+                case "kalkulator":
+                    contentCardLayout.show(contentPanel, "CALCULATOR");
+                    resultArea.setText("");
+                    return;
+
+                case "game":
+                case "permainan":
+                    contentCardLayout.show(contentPanel, "GAME");
+                    resultArea.setText("");
+                    return;
+
+                case "matrix":
+                case "matriks":
+                case "digital":
+                    MatrixRainEffect.triggerMatrixRain(mainFrame);
+                    if (isEnglishToIndonesian) {
+                        if (searchText.equals("matrix")) displaySearchResult("matrix", "Matriks");
+                        else if (searchText.equals("digital")) displaySearchResult("digital", "Digital");
+                        else displaySearchResult("matriks", "Matrix");
+                    } else {
+                        if (searchText.equals("matriks")) displaySearchResult("matriks", "Matrix");
+                        else if (searchText.equals("digital")) displaySearchResult("digital", "Digital");
+                        else displaySearchResult("matrix", "Matriks");
+                    }
+                    return;
+
+                default:
+                    String meaning = null;
+                    if (isEnglishToIndonesian) {
+                        meaning = englishToIndonesianTree.search(searchText);
+                        if (meaning != null) {
+                            displaySearchResult(searchText, meaning);
+                            return;
+                        }
+                    } else {
+                        meaning = indonesianToEnglishTree.search(searchText);
+                        if (meaning != null) {
+                            displaySearchResult(searchText, meaning);
+                            return;
+                        }
+                    }
                     displayNotFound(searchText);
-                }
+            }
+        } catch (Exception ex) {
+            resultArea.setText("ERROR: Terjadi kesalahan internal. Coba lagi.");
         }
+    }
+
+    private void displayExplosionEffect(String searchText) {
+        String word = searchText.toUpperCase();
+        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
+        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
+        String translation = isEnglishToIndonesian ? "Ledakan, Letusan" : "Explosion, Blast";
+        String result = "DICTIONARY\n" +
+                       "Word: " + word + "\n" +
+                       languageFrom + ": " + searchText + "\n" +
+                       languageTo + ": " + translation;
+        resultArea.setText(result);
+    }
+
+    private void displayCorruptionEffect(String searchText) {
+        String word = searchText.toUpperCase();
+        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
+        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
+        String translation = isEnglishToIndonesian ? "Tikus" : "Mouse";
+        String result = "DICTIONARY\n" +
+                       "Word: " + word + "\n" +
+                       languageFrom + ": " + searchText + "\n" +
+                       languageTo + ": " + translation;
+        resultArea.setText(result);
+    }
+
+    private void displayBlurEffect(String searchText) {
+        String word = searchText.toUpperCase();
+        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
+        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
+        String translation = isEnglishToIndonesian ? "Buram, Kabur" : "Blurry";
+        String result = "DICTIONARY\n" +
+                       "Word: " + word + "\n" +
+                       languageFrom + ": " + searchText + "\n" +
+                       languageTo + ": " + translation;
+        resultArea.setText(result);
     }
 
     private void displaySearchResult(String searchText, String meaning) {
         String word = searchText.toUpperCase();
         String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
         String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-
-        String result = "KAMUS BAHASA\n\n" +
+        String result = "DICTIONARY\n" +
                        "Word: " + word + "\n" +
                        languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + meaning + "\n\n" +
-                       "Example: \"" + searchText + "\" in a sentence...\n\n" +
-                       "---\n" ;
-        
+                       languageTo + ": " + meaning;
+        resultArea.setText(result);
+    }
+
+    private void displayOldEffect(String searchText) {
+        String word = searchText.toUpperCase();
+        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
+        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
+        String translation = isEnglishToIndonesian ? "Kuno" : "Old";
+        String result = "DICTIONARY\n" +
+                       "Word: " + word + "\n" +
+                       languageFrom + ": " + searchText + "\n" +
+                       languageTo + ": " + translation;
         resultArea.setText(result);
     }
 
     private void displayNotFound(String searchText) {
+        String word = searchText.toUpperCase();
         if (isEnglishToIndonesian) {
-            resultArea.setText("KAMUS BAHASA\n\n" +
-                             "Word: " + searchText.toUpperCase() + "\n" +
-                             "Status: Tidak ditemukan\n\n" +
-                             "Coba kata: hello, world, computer, blue, red, green\n\n" +
-                             "---\n");
+            String result = "DICTIONARY\n" +
+                          "Word: " + word + "\n" +
+                          "ERROR: Kata '" + searchText + "' tidak ditemukan dalam kamus";
+            resultArea.setText(result);
         } else {
-            resultArea.setText("KAMUS BAHASA\n\n" +
-                             "Kata: " + searchText.toUpperCase() + "\n" +
-                             "Status: Not found\n\n" +
-                             "Try: halo, dunia, komputer, biru, merah, hijau\n\n" +
-                             "---\n");
+            String result = "DICTIONARY\n" +
+                          "Word: " + word + "\n" +
+                          "ERROR: Word '" + searchText + "' not found in dictionary";
+            resultArea.setText(result);
         }
     }
 
     private JPanel createCalculatorPanel() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(18, 18, 18));
-        panel.setBorder(new EmptyBorder(20, 50, 20, 50));
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBackground(new Color(25, 25, 35));
+        panel.setBorder(new EmptyBorder(15, 25, 15, 25));
 
         JLabel headerLabel = new JLabel("KALKULATOR");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        headerLabel.setForeground(new Color(241, 196, 15));
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        headerLabel.setForeground(new Color(255, 200, 60));
         headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        headerLabel.setBorder(new EmptyBorder(0, 0, 20, 0));
+        headerLabel.setBorder(new EmptyBorder(0, 0, 15, 0));
 
         calcDisplay = new JTextField("0");
-        calcDisplay.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        calcDisplay.setBackground(new Color(40, 40, 40));
+        calcDisplay.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        calcDisplay.setBackground(new Color(40, 40, 50));
         calcDisplay.setForeground(Color.WHITE);
         calcDisplay.setHorizontalAlignment(SwingConstants.RIGHT);
         calcDisplay.setEditable(false);
         calcDisplay.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(241, 196, 15), 2),
-            BorderFactory.createEmptyBorder(12, 12, 12, 12)
+            BorderFactory.createLineBorder(new Color(255, 200, 60), 1),
+            BorderFactory.createEmptyBorder(10, 12, 10, 12)
         ));
-        
+        calcDisplay.setPreferredSize(new Dimension(200, 40));
+
         JPanel buttonPanel = new JPanel(new GridLayout(5, 4, 6, 6));
-        buttonPanel.setBackground(new Color(18, 18, 18));
+        buttonPanel.setBackground(new Color(25, 25, 35));
         buttonPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
-        
-        String[] buttons = {
-            "C", "⌫", "%", "/",
-            "7", "8", "9", "*",
+
+        String[] labels = {
+            "C", "Hapus", "%", "/",
+            "7", "8", "9", "X",
             "4", "5", "6", "-",
             "1", "2", "3", "+",
             "0", ".", "=", "←"
         };
-        
-        for (String text : buttons) {
-            JButton button = createCalcButton(text);
-            buttonPanel.add(button);
+
+        for (String text : labels) {
+            JButton b = new JButton(text);
+            b.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            b.setFocusPainted(false);
+            b.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+            b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            if (text.equals("=")) {
+                b.setBackground(new Color(60, 180, 100));
+                b.setForeground(Color.WHITE);
+            } else if (text.matches("[0-9\\.]")) {
+                b.setBackground(new Color(60, 60, 80));
+                b.setForeground(Color.WHITE);
+            } else if (text.equals("←")) {
+                b.setBackground(new Color(220, 80, 70));
+                b.setForeground(Color.WHITE);
+            } else if (text.equals("C") || text.equals("Hapus")) {
+                b.setBackground(new Color(255, 160, 50));
+                b.setForeground(Color.WHITE);
+            } else {
+                b.setBackground(new Color(80, 80, 100));
+                b.setForeground(new Color(255, 200, 60));
+            }
+
+            if (text.matches("[0-9]")) {
+                b.addActionListener(e -> appendNumber(text));
+            } else if (text.equals(".")) {
+                b.addActionListener(e -> appendDecimal());
+            } else if (text.equals("C")) {
+                b.addActionListener(e -> clearCalc());
+            } else if (text.equals("Hapus")) {
+                b.addActionListener(e -> backspaceCalc());
+            } else if (text.equals("=")) {
+                b.addActionListener(e -> calculateResult());
+            } else if (text.equals("←")) {
+                b.addActionListener(e -> contentCardLayout.show(contentPanel, "DICTIONARY"));
+            } else if (text.equals("%")) {
+                b.addActionListener(e -> percentCalc());
+            } else if (text.equals("/") || text.equals("X") || text.equals("-") || text.equals("+")) {
+                String op = text.equals("X") ? "*" : text;
+                b.addActionListener(e -> setOperator(op));
+            }
+            buttonPanel.add(b);
         }
-        
-        panel.add(headerLabel, BorderLayout.NORTH);
-        panel.add(calcDisplay, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setBackground(new Color(25, 25, 35));
+        top.add(headerLabel, BorderLayout.NORTH);
+        top.add(calcDisplay, BorderLayout.CENTER);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(buttonPanel, BorderLayout.CENTER);
+
         return panel;
     }
-    
-    private JButton createCalcButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        if (text.equals("=")) {
-            button.setBackground(new Color(41, 128, 185));
-            button.setForeground(Color.WHITE);
-        } else if (text.matches("[0-9.]")) {
-            button.setBackground(new Color(60, 60, 60));
-            button.setForeground(Color.WHITE);
-        } else if (text.equals("←")) {
-            button.setBackground(new Color(231, 76, 60));
-            button.setForeground(Color.WHITE);
-        } else if (text.equals("C")) {
-            button.setBackground(new Color(230, 126, 34));
-            button.setForeground(Color.WHITE);
+
+    private void appendNumber(String num) {
+        String text = calcDisplay.getText();
+        if ("0".equals(text) || "ERROR".equals(text)) {
+            calcDisplay.setText(num);
         } else {
-            button.setBackground(new Color(80, 80, 80));
-            button.setForeground(new Color(241, 196, 15));
+            calcDisplay.setText(text + num);
         }
-        
-        button.addActionListener(e -> handleCalcButton(text));
-        return button;
     }
 
-    private void handleCalcButton(String command) {
-        switch (command) {
-            case "C":
-                currentCalcInput = "";
-                calcDisplay.setText("0");
-                break;
-            case "⌫":
-                if (!currentCalcInput.isEmpty()) {
-                    currentCalcInput = currentCalcInput.substring(0, currentCalcInput.length() - 1);
-                    calcDisplay.setText(currentCalcInput.isEmpty() ? "0" : currentCalcInput);
-                }
-                break;
-            case "=":
-                calculateResult();
-                break;
-            case "←":
-                contentCardLayout.show(contentPanel, "DICTIONARY");
-                break;
-            default:
-                if (currentCalcInput.equals("0")) {
-                    currentCalcInput = command;
-                } else {
-                    currentCalcInput += command;
-                }
-                calcDisplay.setText(currentCalcInput);
+    private void appendDecimal() {
+        String text = calcDisplay.getText();
+        if ("ERROR".equals(text)) {
+            calcDisplay.setText("0.");
+            return;
+        }
+        if (!text.contains(".")) {
+            calcDisplay.setText(text + ".");
         }
     }
-    
+
+    private void clearCalc() {
+        calcCurrentValue = 0;
+        calcCurrentOperator = "";
+        calcDisplay.setText("0");
+        currentCalcInput = "";
+    }
+
+    private void backspaceCalc() {
+        String text = calcDisplay.getText();
+        if (text == null || text.length() <= 1) {
+            calcDisplay.setText("0");
+            return;
+        }
+        calcDisplay.setText(text.substring(0, text.length() - 1));
+    }
+
+    private void percentCalc() {
+        try {
+            double val = Double.parseDouble(calcDisplay.getText());
+            val = val / 100.0;
+            calcDisplay.setText(String.valueOf(val));
+        } catch (Exception ex) {
+            calcDisplay.setText("ERROR");
+        }
+    }
+
+    private void setOperator(String op) {
+        try {
+            calcCurrentValue = Double.parseDouble(calcDisplay.getText());
+            calcCurrentOperator = op;
+            calcDisplay.setText("0");
+        } catch (Exception ex) {
+            calcDisplay.setText("ERROR");
+            calcCurrentOperator = "";
+        }
+    }
+
     private void calculateResult() {
         try {
-            String expression = currentCalcInput.replaceAll("×", "*")
-                                              .replaceAll("÷", "/")
-                                              .replaceAll("%", "/100");
-
-            Object result = new javax.script.ScriptEngineManager()
-                .getEngineByName("JavaScript")
-                .eval(expression);
-            
-            currentCalcInput = result.toString();
-            calcDisplay.setText(currentCalcInput);
+            double second = Double.parseDouble(calcDisplay.getText());
+            double result = 0;
+            switch (calcCurrentOperator) {
+                case "+": result = calcCurrentValue + second; break;
+                case "-": result = calcCurrentValue - second; break;
+                case "*": result = calcCurrentValue * second; break;
+                case "/":
+                    if (second == 0) {
+                        calcDisplay.setText("ERROR");
+                        calcCurrentOperator = "";
+                        return;
+                    }
+                    result = calcCurrentValue / second;
+                    break;
+                default:
+                    result = second;
+            }
+            if (Double.isInfinite(result) || Double.isNaN(result)) {
+                calcDisplay.setText("ERROR");
+            } else {
+                String out = result % 1 == 0 ? String.valueOf((long) result) : String.valueOf(result);
+                calcDisplay.setText(out);
+            }
+            calcCurrentOperator = "";
+            calcCurrentValue = 0;
         } catch (Exception ex) {
-            calcDisplay.setText("Error");
-            currentCalcInput = "";
+            calcDisplay.setText("ERROR");
+            calcCurrentOperator = "";
         }
     }
-    
+
     private JPanel createGamePanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(18, 18, 18));
-        panel.setBorder(new EmptyBorder(40, 100, 40, 100));
+        panel.setBackground(new Color(25, 25, 35));
+        panel.setBorder(new EmptyBorder(25, 60, 25, 60));
 
-        JLabel headerLabel = new JLabel("GAME TEBAK ANGKA");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        headerLabel.setForeground(new Color(46, 204, 113));
+        JLabel headerLabel = new JLabel("KOIN FLIP");
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        headerLabel.setForeground(new Color(80, 220, 120));
         headerLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        headerLabel.setBorder(new EmptyBorder(0, 0, 30, 0));
+        headerLabel.setBorder(new EmptyBorder(0, 0, 20, 0));
 
-        JPanel gameContent = new JPanel(new BorderLayout(15, 15));
-        gameContent.setBackground(new Color(18, 18, 18));
-        
-        gameMessage = new JLabel("Saya memikirkan angka 1-100. Coba tebak!");
-        gameMessage.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        JPanel gameContent = new JPanel(new BorderLayout(10, 10));
+        gameContent.setBackground(new Color(25, 25, 35));
+
+        JPanel coinPanel = new JPanel(new BorderLayout());
+        coinPanel.setBackground(new Color(25, 25, 35));
+        coinPanel.setBorder(new EmptyBorder(15, 0, 20, 0));
+
+        coinLabel = new JLabel("🪙", SwingConstants.CENTER);
+        coinLabel.setFont(new Font("Segoe UI", Font.PLAIN, 100));
+        coinLabel.setForeground(new Color(255, 200, 60));
+
+        JPanel coinContainer = new JPanel(new GridBagLayout());
+        coinContainer.setBackground(new Color(25, 25, 35));
+        coinContainer.add(coinLabel);
+
+        coinPanel.add(coinContainer, BorderLayout.CENTER);
+
+        gameMessage = new JLabel("Klik 'LEMPAR KOIN' untuk memulai!");
+        gameMessage.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         gameMessage.setForeground(Color.WHITE);
         gameMessage.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        guessField = new JTextField();
-        guessField.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        guessField.setHorizontalAlignment(SwingConstants.CENTER);
-        guessField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(46, 204, 113), 2),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
-        
-        JButton guessButton = new JButton("TEBAK!");
-        guessButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        guessButton.setBackground(new Color(46, 204, 113));
-        guessButton.setForeground(Color.WHITE);
-        guessButton.setFocusPainted(false);
-        guessButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
+        JButton flipButton = new JButton("LEMPAR KOIN!");
+        flipButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        flipButton.setBackground(new Color(80, 220, 120));
+        flipButton.setForeground(Color.WHITE);
+        flipButton.setFocusPainted(false);
+        flipButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        flipButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
         JButton backButton = new JButton("← Kembali ke Kamus");
-        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        backButton.setBackground(new Color(60, 60, 60));
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        backButton.setBackground(new Color(60, 60, 80));
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        JPanel inputPanel = new JPanel(new BorderLayout(10, 10));
-        inputPanel.setBackground(new Color(18, 18, 18));
-        inputPanel.add(guessField, BorderLayout.CENTER);
-        inputPanel.add(guessButton, BorderLayout.EAST);
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(new Color(18, 18, 18));
+        buttonPanel.setBackground(new Color(25, 25, 35));
+        buttonPanel.add(flipButton);
         buttonPanel.add(backButton);
-        
+
         gameContent.add(gameMessage, BorderLayout.NORTH);
-        gameContent.add(inputPanel, BorderLayout.CENTER);
+        gameContent.add(coinPanel, BorderLayout.CENTER);
         gameContent.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         panel.add(headerLabel, BorderLayout.NORTH);
         panel.add(gameContent, BorderLayout.CENTER);
 
-        guessButton.addActionListener(e -> checkGuess());
-        guessField.addActionListener(e -> checkGuess());
-        backButton.addActionListener(e -> contentCardLayout.show(contentPanel, "DICTIONARY"));
+        flipTimer = new Timer(100, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                flipCount++;
+                switch (flipCount % 4) {
+                    case 0:
+                        coinLabel.setText("🪙");
+                        coinLabel.setForeground(new Color(255, 200, 60));
+                        break;
+                    case 1:
+                        coinLabel.setText("⚫");
+                        coinLabel.setForeground(Color.WHITE);
+                        break;
+                    case 2:
+                        coinLabel.setText("💰");
+                        coinLabel.setForeground(new Color(255, 215, 0));
+                        break;
+                    case 3:
+                        coinLabel.setText("◎");
+                        coinLabel.setForeground(new Color(200, 200, 200));
+                        break;
+                }
+                double scale = 1.0 + 0.3 * Math.sin(flipCount * 0.4);
+                int fontSize = (int)(100 * scale);
+                coinLabel.setFont(new Font("Segoe UI", Font.PLAIN, fontSize));
 
-        startNewGame();
-        
+                if (flipCount >= TOTAL_FLIPS) {
+                    flipTimer.stop();
+                    boolean finalResult = Math.random() > 0.5;
+                    if (finalResult) {
+                        coinLabel.setText("🪙");
+                        coinLabel.setForeground(new Color(255, 200, 60));
+                        coinLabel.setFont(new Font("Segoe UI", Font.PLAIN, 100));
+                        gameMessage.setText("HASIL: HEAD!");
+                    } else {
+                        coinLabel.setText("🪙");
+                        coinLabel.setForeground(new Color(80, 160, 240));
+                        coinLabel.setFont(new Font("Segoe UI", Font.PLAIN, 100));
+                        gameMessage.setText("HASIL: TAIL!");
+                    }
+                    flipButton.setEnabled(true);
+                    flipCount = 0;
+                }
+            }
+        });
+
+        flipButton.addActionListener(e -> startCoinFlip(flipButton));
+        backButton.addActionListener(e -> {
+            contentCardLayout.show(contentPanel, "DICTIONARY");
+        });
+
         return panel;
     }
-    
-    private void startNewGame() {
-        targetNumber = (int) (Math.random() * 100) + 1;
-        attempts = 0;
-        gameMessage.setText("Saya memikirkan angka 1-100. Coba tebak!");
-        guessField.setText("");
-        guessField.requestFocus();
-    }
-    
-    private void checkGuess() {
-        try {
-            int guess = Integer.parseInt(guessField.getText());
-            attempts++;
-            
-            if (guess < targetNumber) {
-                gameMessage.setText(guess + " terlalu RENDAH! Percobaan: " + attempts);
-            } else if (guess > targetNumber) {
-                gameMessage.setText(guess + " terlalu TINGGI! Percobaan: " + attempts);
-            } else {
-                gameMessage.setText("BENAR! Angka " + targetNumber + " ditemukan dalam " + attempts + " percobaan!");
+
+    private void startCoinFlip(JButton flipButton) {
+        if (gamePanel == null) {
+            Component[] comps = contentPanel.getComponents();
+            for (Component c : comps) {
+                if (c instanceof JPanel) {
+                    JPanel p = (JPanel) c;
+                    if (p.getComponents().length > 0) {
+                        gamePanel = p;
+                        break;
+                    }
+                }
             }
-            
-            guessField.setText("");
-            guessField.requestFocus();
-        } catch (NumberFormatException ex) {
-            gameMessage.setText("Masukkan angka yang valid!");
-            guessField.setText("");
         }
+        if (flipButton != null) flipButton.setEnabled(false);
+        flipCount = 0;
+        gameMessage.setText("Koin sedang berputar...");
+        coinLabel.setFont(new Font("Segoe UI", Font.PLAIN, 100));
+        flipTimer.start();
     }
 }

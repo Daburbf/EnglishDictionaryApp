@@ -43,12 +43,12 @@ public class DashboardPanel extends JPanel {
         headerPanel.setPreferredSize(new Dimension(0, 180));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        JLabel titleLabel = new JLabel("ENGLISH DICTIONARY APP");
+        JLabel titleLabel = new JLabel("MADE BY KELOMPOK 5");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 38));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         
-        JLabel subtitleLabel = new JLabel(" The Real Kamus");
+        JLabel subtitleLabel = new JLabel(" The Real Dictionary");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         subtitleLabel.setForeground(new Color(200, 200, 200));
         
@@ -115,17 +115,17 @@ public class DashboardPanel extends JPanel {
             }
         });
 
-        JLabel iconLabel = new JLabel("📚");
+        JLabel iconLabel = new JLabel("OPEN DA DICTIONARY");
         iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 72));
         iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
         iconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         
-        JLabel titleLabel = new JLabel("KAMUS ENGLISH");
+        JLabel titleLabel = new JLabel("ENGLISH-INDONESIA DICTIONARY");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
         titleLabel.setForeground(new Color(52, 152, 219));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
-        JLabel subtitleLabel = new JLabel("1000+ kata dengan pencarian real-time");
+        JLabel subtitleLabel = new JLabel("1000+ kata ");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         subtitleLabel.setForeground(Color.WHITE);
         subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);

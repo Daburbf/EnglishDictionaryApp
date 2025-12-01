@@ -1,5 +1,0 @@
-Setya Novanto|Ketua DPR RI|Kasus Korupsi E-KTP - Rp 2,3 Triliun|src/resources/images/corruptors/setya_novanto.png
-Anas Urbaningrum|Ketua Umum Partai Demokrat|Kasus Korupsi Hambalang - Rp 463 Miliar|src/resources/images/corruptors/anas_urbaningrum.png
-Nazaruddin|Bendahara Partai Demokrat|Kasus Korupsi Wisma Atlet - Rp 191 Miliar|src/resources/images/corruptors/nazaruddin.png
-Joko Soegiarto Tjandra|Pengusaha|Kasus Korupsi BLBI - Rp 546 Miliar|src/resources/images/corruptors/default_corruptor.png
-Sugiharto|Dirjen Pajak|Kasus Mafia Pajak - Rp 100 Miliar|src/resources/images/corruptors/default_corruptor.png

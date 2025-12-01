@@ -12,7 +12,7 @@ public class MainFrame extends JFrame {
     }
     
     private void initializeUI() {
-        setTitle("English Dictionary App - All in One");
+        setTitle("English Dictionary - All in One");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 750);
         setLocationRelativeTo(null);
@@ -44,6 +44,12 @@ public class MainFrame extends JFrame {
     
     public void showDictionary() {
         cardLayout.show(mainPanel, "DICTIONARY");
+    }
+
+    public void removeMouseMotionListeners() {
+        for (java.awt.event.MouseMotionListener listener : getMouseMotionListeners()) {
+            removeMouseMotionListener(listener);
+        }
     }
     
     public static void main(String[] args) {

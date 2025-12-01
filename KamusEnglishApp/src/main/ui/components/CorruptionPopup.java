@@ -2,87 +2,126 @@ package main.ui.components;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
-public class CorruptionPopup extends JDialog {
+public class CorruptionPopup extends JWindow {
+    private JLabel imageLabel;
     
-    public CorruptionPopup(Frame parent, String name, String position, String corruptionCase) {
-        super(parent, "Pejabat Koruptor Terdeteksi!", true);
-        initializeUI(name, position, corruptionCase);
+    public CorruptionPopup(Window owner) {
+        super(owner);
+        initializeUI();
     }
     
-    private void initializeUI(String name, String position, String corruptionCase) {
+    private void initializeUI() {
         setLayout(new BorderLayout());
-        setSize(400, 300);
-        setLocationRelativeTo(null);
-        setResizable(false);
+        setAlwaysOnTop(true);
 
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(new Color(231, 76, 60));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setBackground(new Color(0, 0, 0, 0));
 
-        JPanel headerPanel = new JPanel(new FlowLayout());
-        headerPanel.setBackground(new Color(231, 76, 60));
+        ImageIcon originalIcon = createBahlilImage();
         
-        JLabel warningIcon = new JLabel("Warning");
-        warningIcon.setFont(new Font("Arial", Font.BOLD, 24));
-        warningIcon.setForeground(Color.YELLOW);
+        imageLabel = new JLabel(originalIcon);
+        imageLabel.setOpaque(false);
         
-        JLabel titleLabel = new JLabel("PEJABAT KORUPTOR MUNCUL!");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setForeground(Color.WHITE);
-        
-        headerPanel.add(warningIcon);
-        headerPanel.add(titleLabel);
+        add(imageLabel, BorderLayout.CENTER);
 
-        JPanel detailsPanel = new JPanel(new GridLayout(3, 1, 10, 10));
-        detailsPanel.setBackground(new Color(231, 76, 60));
-        detailsPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        
-        JLabel nameLabel = new JLabel("Nama: " + name, JLabel.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        nameLabel.setForeground(Color.YELLOW);
-        
-        JLabel positionLabel = new JLabel("Jabatan: " + position, JLabel.CENTER);
-        positionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        positionLabel.setForeground(Color.WHITE);
-        
-        JLabel caseLabel = new JLabel("<html><center>Kasus: " + corruptionCase + "</center></html>");
-        caseLabel.setFont(new Font("Arial", Font.ITALIC, 12));
-        caseLabel.setForeground(Color.WHITE);
-        
-        detailsPanel.add(nameLabel);
-        detailsPanel.add(positionLabel);
-        detailsPanel.add(caseLabel);
+        pack();
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.setBackground(new Color(231, 76, 60));
-        
-        JButton closeButton = new JButton("Tutup");
-        closeButton.setFont(new Font("Arial", Font.BOLD, 14));
-        closeButton.setBackground(Color.WHITE);
-        closeButton.setForeground(new Color(231, 76, 60));
-        closeButton.setFocusPainted(false);
-        closeButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        closeButton.addActionListener(e -> dispose());
-        
-        buttonPanel.add(closeButton);
-        
-        contentPanel.add(headerPanel, BorderLayout.NORTH);
-        contentPanel.add(detailsPanel, BorderLayout.CENTER);
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
-        add(contentPanel);
-
-        Timer autoCloseTimer = new Timer(5000, e -> dispose());
-        autoCloseTimer.setRepeats(false);
-        autoCloseTimer.start();
+        makeDraggable();
     }
     
-    public static void showPopup(Component parent, String name, String position, String corruptionCase) {
-        Frame frame = JOptionPane.getFrameForComponent(parent);
-        CorruptionPopup popup = new CorruptionPopup(frame, name, position, corruptionCase);
-        popup.setVisible(true);
+    private ImageIcon createBahlilImage() {
+        try {
+
+            String imagePath = "C:\\Users\\TUF GAMING\\Downloads\\bahlil.png.png";
+            File file = new File(imagePath);
+            
+            System.out.println("Loading Bahlil image from: " + imagePath);
+            System.out.println("File exists: " + file.exists());
+            
+            if (file.exists()) {
+                ImageIcon originalIcon = new ImageIcon(imagePath);
+                Image image = originalIcon.getImage();
+
+                Image scaledImage = image.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaledImage);
+            } else {
+                System.out.println("File not found, using default image");
+                return createDefaultImage();
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Error loading Bahlil image: " + e.getMessage());
+            return createDefaultImage();
+        }
+    }
+    
+    private ImageIcon createDefaultImage() {
+
+        int width = 150;
+        int height = 150;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = image.createGraphics();
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setColor(new Color(0, 0, 0, 0));
+        g2d.fillRect(0, 0, width, height);
+        g2d.setColor(new Color(255, 200, 150)); 
+        g2d.fillOval(25, 25, 100, 100);
+        g2d.setColor(Color.BLACK);
+        g2d.fillOval(45, 55, 15, 15);
+        g2d.fillOval(90, 55, 15, 15);
+        g2d.setColor(Color.RED);
+        g2d.fillArc(60, 80, 30, 20, 0, -180);
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("Arial", Font.BOLD, 12));
+        g2d.drawString("BAHLIL", 55, 120);
+        g2d.dispose();
+        
+        return new ImageIcon(image);
+    }
+    
+    private void makeDraggable() {
+        MouseAdapter ma = new MouseAdapter() {
+            private Point initialClick;
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                initialClick = e.getPoint();
+                getComponentAt(initialClick);
+            }
+            
+            @Override
+            public void mouseDragged(MouseEvent e) {
+
+                int thisX = getLocation().x;
+                int thisY = getLocation().y;
+
+                int xMoved = e.getX() - initialClick.x;
+                int yMoved = e.getY() - initialClick.y;
+
+                int X = thisX + xMoved;
+                int Y = thisY + yMoved;
+                setLocation(X, Y);
+            }
+        };
+        
+        addMouseListener(ma);
+        addMouseMotionListener(ma);
+    }
+    
+    public void followCursor(int x, int y) {
+        setLocation(x + 20, y + 20); 
+    }
+    
+    public void showPopup() {
+        setVisible(true);
+    }
+    
+    public void hidePopup() {
+        setVisible(false);
     }
 }
