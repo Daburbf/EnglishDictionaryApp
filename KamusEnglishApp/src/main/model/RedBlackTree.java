@@ -25,10 +25,12 @@ public class RedBlackTree {
             this.key = key;
             this.value = value;
             this.color = RED;
+            this.left = null;
+            this.right = null;
+            this.parent = null;
         }
     }
 
-    
     public void insert(String key, String value) {
         Node newNode = new Node(key.toLowerCase(), value);
         newNode.left = NIL;
@@ -45,7 +47,6 @@ public class RedBlackTree {
             } else if (cmp > 0) {
                 current = current.right;
             } else {
-
                 current.value = value;
                 return;
             }

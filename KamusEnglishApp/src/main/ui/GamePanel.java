@@ -25,7 +25,7 @@ public class GamePanel extends JPanel {
         setBackground(new Color(18, 18, 18));
         setBorder(new EmptyBorder(40, 50, 40, 50));
 
-        JLabel headerLabel = new JLabel("🎮 FLIP KOIN");
+        JLabel headerLabel = new JLabel("Koin Flip");
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         headerLabel.setForeground(new Color(46, 204, 113));
         headerLabel.setHorizontalAlignment(SwingConstants.CENTER);

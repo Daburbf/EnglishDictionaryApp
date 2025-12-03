@@ -12,7 +12,7 @@ public class MainFrame extends JFrame {
     }
     
     private void initializeUI() {
-        setTitle("English Dictionary - All in One");
+        setTitle("English Dictionary");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 750);
         setLocationRelativeTo(null);

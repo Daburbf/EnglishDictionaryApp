@@ -37,7 +37,7 @@ public class CalculatorPanel extends JPanel {
         headerPanel.setBackground(Constants.SUCCESS_COLOR);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         
-        JLabel titleLabel = new JLabel("KALKULATOR SEDERHANA");
+        JLabel titleLabel = new JLabel("KALKULATOR");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titleLabel.setForeground(Color.WHITE);
         

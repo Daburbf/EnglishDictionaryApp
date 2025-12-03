@@ -105,7 +105,7 @@ public class DictionaryPanel extends JPanel {
         englishToIndonesianTree.insert("calculator", "Menampilkan kalkulator");
         englishToIndonesianTree.insert("game", "Memulai koin flip");
         englishToIndonesianTree.insert("explosion", "Ledakan, Letusan");
-        englishToIndonesianTree.insert("boom", "Ledakan, Dentuman");
+        englishToIndonesianTree.insert("bom", "Ledakan, Dentuman");
         englishToIndonesianTree.insert("rain", "Hujan");
         englishToIndonesianTree.insert("matrix", "Matriks");
         englishToIndonesianTree.insert("digital", "Digital");
@@ -160,7 +160,7 @@ public class DictionaryPanel extends JPanel {
         togglePanel.setBackground(new Color(25, 25, 35));
         togglePanel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        languageToggle = new JToggleButton("ENGLISH → INDONESIA");
+        languageToggle = new JToggleButton("ENGLISH - INDONESIA");
         languageToggle.setFont(new Font("Segoe UI", Font.BOLD, 11));
         languageToggle.setBackground(new Color(50, 130, 200));
         languageToggle.setForeground(Color.WHITE);
@@ -173,11 +173,11 @@ public class DictionaryPanel extends JPanel {
         languageToggle.addActionListener(e -> {
             isEnglishToIndonesian = languageToggle.isSelected();
             if (isEnglishToIndonesian) {
-                languageToggle.setText("ENGLISH → INDONESIA");
+                languageToggle.setText("ENGLISH - INDONESIA");
                 searchButton.setText("SEARCH");
             } else {
-                languageToggle.setText("INDONESIA → ENGLISH");
-                searchButton.setText("CAR");
+                languageToggle.setText("INDONESIA - ENGLISH");
+                searchButton.setText("CARI");
             }
             updateWelcomeMessage();
         });
@@ -243,7 +243,7 @@ public class DictionaryPanel extends JPanel {
         footerPanel.setBackground(new Color(25, 25, 35));
         footerPanel.setBorder(new EmptyBorder(12, 0, 0, 0));
 
-        JButton backButton = new JButton("← Kembali ke Dashboard");
+        JButton backButton = new JButton("Kembali ke Dashboard");
         backButton.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         backButton.setBackground(new Color(60, 60, 80));
         backButton.setForeground(Color.WHITE);
@@ -295,18 +295,18 @@ public class DictionaryPanel extends JPanel {
 
             if (isEnglishToIndonesian) {
                 if (indonesianToEnglishTree.search(searchText) != null) {
-                    resultArea.setText("ERROR: Mode English → Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia → English");
+                    resultArea.setText("ERROR: Mode English - Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia - English");
                     return;
                 }
             } else {
                 if (englishToIndonesianTree.search(searchText) != null) {
-                    resultArea.setText("ERROR: Mode Indonesia → English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English → Indonesia");
+                    resultArea.setText("ERROR: Mode Indonesia - English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English - Indonesia");
                     return;
                 }
             }
 
             if (searchText.equals("explosion") || searchText.equals("ledakan") ||
-                searchText.equals("boom") || searchText.equals("complete") ||
+                searchText.equals("bom") || searchText.equals("complete") ||
                 searchText.equals("finished") || searchText.equals("selesai") ||
                 searchText.equals("master") || searchText.equals("vocab") ||
                 searchText.equals("dictionary") || searchText.equals("kamus")) {
@@ -341,9 +341,9 @@ public class DictionaryPanel extends JPanel {
                     displaySearchResult("hujan", "Rain");
                 } else {
                     if (isEnglishToIndonesian) {
-                        resultArea.setText("ERROR: Mode English → Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia → English");
+                        resultArea.setText("ERROR: Mode English - Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia - English");
                     } else {
-                        resultArea.setText("ERROR: Mode Indonesia → English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English → Indonesia");
+                        resultArea.setText("ERROR: Mode Indonesia - English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English - Indonesia");
                     }
                 }
                 return;
@@ -450,7 +450,7 @@ public class DictionaryPanel extends JPanel {
         String word = searchText.toUpperCase();
         String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
         String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String translation = isEnglishToIndonesian ? "Kuno" : "Old";
+        String translation = isEnglishToIndonesian ? "Kuno, Tua, Umur" : "Old";
         String result = "DICTIONARY\n" +
                        "Word: " + word + "\n" +
                        languageFrom + ": " + searchText + "\n" +
@@ -658,7 +658,7 @@ public class DictionaryPanel extends JPanel {
         panel.setBackground(new Color(25, 25, 35));
         panel.setBorder(new EmptyBorder(25, 60, 25, 60));
 
-        JLabel headerLabel = new JLabel("KOIN FLIP");
+        JLabel headerLabel = new JLabel("FLIP KOIN");
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         headerLabel.setForeground(new Color(80, 220, 120));
         headerLabel.setHorizontalAlignment(SwingConstants.CENTER);

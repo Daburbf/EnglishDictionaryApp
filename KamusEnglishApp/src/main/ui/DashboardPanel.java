@@ -120,12 +120,12 @@ public class DashboardPanel extends JPanel {
         iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
         iconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         
-        JLabel titleLabel = new JLabel("ENGLISH-INDONESIA DICTIONARY");
+        JLabel titleLabel = new JLabel("ENGLISH-INDONESIA");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
         titleLabel.setForeground(new Color(52, 152, 219));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
-        JLabel subtitleLabel = new JLabel("1000+ kata ");
+        JLabel subtitleLabel = new JLabel(" Click to start! ");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         subtitleLabel.setForeground(Color.WHITE);
         subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
