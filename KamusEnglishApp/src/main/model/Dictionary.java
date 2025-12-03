@@ -12,7 +12,6 @@ public class Dictionary {
     }
     
     private void initializeDictionary() {
-
         words.add(new Word("abandon", "meninggalkan", "verb"));
         words.add(new Word("ability", "kemampuan", "noun"));
         words.add(new Word("able", "mampu", "adjective"));
@@ -1002,13 +1001,69 @@ public class Dictionary {
         words.add(new Word("young", "muda", "adjective"));
         words.add(new Word("your", "kamu", "pronoun"));
         words.add(new Word("yourself", "dirimu sendiri", "pronoun"));
+
+        words.add(new Word("airport", "bandara", "noun",
+            "A complex of runways and buildings for the takeoff, landing, and maintenance of civil aircraft, with facilities for passengers",
+            "Kompleks landasan pacu dan bangunan untuk lepas landas, mendarat, dan pemeliharaan pesawat sipil, dengan fasilitas untuk penumpang",
+            null));
+            
+        words.add(new Word("airplane", "pesawat terbang", "noun",
+            "A powered flying vehicle with fixed wings and a weight greater than that of the air it displaces",
+            "Kendaraan terbang yang bertenaga dengan sayap tetap dan berat lebih besar dari udara yang dipindahkannya, digunakan untuk mengangkut orang atau barang",
+            null));
+            
+        words.add(new Word("aircraft", "pesawat", "noun",
+            "Any machine capable of flying, including airplanes, helicopters, and gliders",
+            "Mesin apa pun yang mampu terbang, termasuk pesawat terbang, helikopter, dan glider",
+            null));
+            
+        words.add(new Word("airliner", "pesawat penumpang", "noun",
+            "A large airplane for transporting passengers and cargo",
+            "Pesawat besar untuk mengangkut penumpang dan kargo",
+            null));
+
+        words.add(new Word("explosion", "ledakan", "noun", "", "", "explosion"));
+        words.add(new Word("blur", "buram", "adjective", "", "", "blur"));
+        words.add(new Word("matrix", "matriks", "noun", "", "", "matrix"));
+        words.add(new Word("rain", "hujan", "noun", "", "", "rain"));
+        words.add(new Word("old", "tua", "adjective", "", "", "old"));
+        words.add(new Word("mouse", "tikus", "noun", "", "", "mouse"));
+        words.add(new Word("calculator", "kalkulator", "noun", "", "", "calculator"));
+        words.add(new Word("game", "permainan", "noun", "", "", "game"));
+        words.add(new Word("bom", "bom", "noun", "", "", "explosion"));
+        words.add(new Word("ledakan", "explosion", "noun", "", "", "explosion"));
+        words.add(new Word("buram", "blurry", "adjective", "", "", "blur"));
+        words.add(new Word("matriks", "matrix", "noun", "", "", "matrix"));
+        words.add(new Word("hujan", "rain", "noun", "", "", "rain"));
+        words.add(new Word("tua", "old", "adjective", "", "", "old"));
+        words.add(new Word("tikus", "mouse", "noun", "", "", "mouse"));
+        words.add(new Word("kalkulator", "calculator", "noun", "", "", "calculator"));
+        words.add(new Word("permainan", "game", "noun", "", "", "game"));
+    }
+    
+    public List<Word> getRecommendations(String prefix) {
+        List<Word> recommendations = new ArrayList<>();
+        String lowerPrefix = prefix.toLowerCase();
+        
+        for (Word word : words) {
+            if (word.getEnglish().toLowerCase().startsWith(lowerPrefix) ||
+                word.getIndonesian().toLowerCase().startsWith(lowerPrefix)) {
+                recommendations.add(word);
+                if (recommendations.size() >= 5) {
+                    break;
+                }
+            }
+        }
+        return recommendations;
     }
     
     public List<Word> searchWord(String keyword) {
         List<Word> results = new ArrayList<>();
+        String lowerKeyword = keyword.toLowerCase();
+        
         for (Word word : words) {
-            if (word.getEnglish().toLowerCase().contains(keyword.toLowerCase()) ||
-                word.getIndonesian().toLowerCase().contains(keyword.toLowerCase())) {
+            if (word.getEnglish().toLowerCase().contains(lowerKeyword) ||
+                word.getIndonesian().toLowerCase().contains(lowerKeyword)) {
                 results.add(word);
             }
         }
@@ -1017,5 +1072,25 @@ public class Dictionary {
     
     public List<Word> getAllWords() {
         return new ArrayList<>(words);
+    }
+    
+    public Word findWordByEnglish(String english) {
+        String lowerEnglish = english.toLowerCase();
+        for (Word word : words) {
+            if (word.getEnglish().toLowerCase().equals(lowerEnglish)) {
+                return word;
+            }
+        }
+        return null;
+    }
+    
+    public Word findWordByIndonesian(String indonesian) {
+        String lowerIndonesian = indonesian.toLowerCase();
+        for (Word word : words) {
+            if (word.getIndonesian().toLowerCase().equals(lowerIndonesian)) {
+                return word;
+            }
+        }
+        return null;
     }
 }

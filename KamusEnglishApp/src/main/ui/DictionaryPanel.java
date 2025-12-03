@@ -9,8 +9,7 @@ import main.model.RedBlackTree;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.List;
 import main.ui.components.OldEffect;
 import main.ui.components.MatrixRainEffect;
@@ -26,7 +25,6 @@ public class DictionaryPanel extends JPanel {
     private CardLayout contentCardLayout;
     private JPanel calculatorPanel;
     private JTextField calcDisplay;
-    private String currentCalcInput = "";
     private double calcCurrentValue = 0;
     private String calcCurrentOperator = "";
     private JPanel gamePanel;
@@ -40,15 +38,73 @@ public class DictionaryPanel extends JPanel {
     private JButton searchButton;
     private CorruptionPopup corruptionPopup;
     private Timer corruptionTimer;
+    private JProgressBar loadingBar;
+    private Timer loadingTimer;
+    private int loadingProgress = 0;
+    private Timer autoSearchTimer;
+    private final int AUTO_SEARCH_DELAY = 300;
 
     public DictionaryPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.englishToIndonesianTree = new RedBlackTree();
         this.indonesianToEnglishTree = new RedBlackTree();
         this.dictionaryModel = new Dictionary();
-        initializeDictionary();
         initializeUI();
         setupCorruptionEffect();
+        startLoadingDictionary();
+    }
+
+    private void startLoadingDictionary() {
+        loadingBar.setVisible(true);
+        loadingTimer = new Timer(20, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                loadingProgress += 2;
+                loadingBar.setValue(loadingProgress);
+                
+                if (loadingProgress >= 100) {
+                    loadingTimer.stop();
+                    loadingBar.setVisible(false);
+                    initializeDictionary();
+                }
+            }
+        });
+        loadingTimer.start();
+    }
+
+    private void initializeDictionary() {
+        SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                List<Word> allWords = dictionaryModel.getAllWords();
+                int total = allWords.size();
+                
+                for (int i = 0; i < total; i++) {
+                    Word word = allWords.get(i);
+                    englishToIndonesianTree.insert(word.getEnglish().toLowerCase(), word);
+                    indonesianToEnglishTree.insert(word.getIndonesian().toLowerCase(), word);
+                    
+                    publish((i * 100) / total);
+                    Thread.sleep(1);
+                }
+                return null;
+            }
+            
+            @Override
+            protected void process(List<Integer> chunks) {
+                if (!chunks.isEmpty()) {
+                    int progress = chunks.get(chunks.size() - 1);
+                    loadingBar.setValue(progress);
+                }
+            }
+            
+            @Override
+            protected void done() {
+                loadingBar.setValue(100);
+                loadingBar.setVisible(false);
+            }
+        };
+        worker.execute();
     }
 
     private void setupCorruptionEffect() {
@@ -87,43 +143,13 @@ public class DictionaryPanel extends JPanel {
         });
     }
 
-    private void initializeDictionary() {
-        try {
-            List<Word> allWords = dictionaryModel.getAllWords();
-            if (allWords != null) {
-                for (Word word : allWords) {
-                    if (word.getEnglish() != null && word.getIndonesian() != null) {
-                        englishToIndonesianTree.insert(word.getEnglish().toLowerCase(), word.getIndonesian());
-                        indonesianToEnglishTree.insert(word.getIndonesian().toLowerCase(), word.getEnglish());
-                    }
-                }
-            }
-        } catch (Exception ex) {
-        }
-
-        englishToIndonesianTree.insert("blur", "Buram, Kabur");
-        englishToIndonesianTree.insert("calculator", "Menampilkan kalkulator");
-        englishToIndonesianTree.insert("game", "Memulai koin flip");
-        englishToIndonesianTree.insert("explosion", "Ledakan, Letusan");
-        englishToIndonesianTree.insert("bom", "Ledakan, Dentuman");
-        englishToIndonesianTree.insert("rain", "Hujan");
-        englishToIndonesianTree.insert("matrix", "Matriks");
-        englishToIndonesianTree.insert("digital", "Digital");
-        englishToIndonesianTree.insert("mouse", "Tikus");
-
-        indonesianToEnglishTree.insert("buram", "Blurry");
-        indonesianToEnglishTree.insert("ledakan", "Explosion");
-        indonesianToEnglishTree.insert("lengkap", "Complete");
-        indonesianToEnglishTree.insert("hujan", "Rain");
-        indonesianToEnglishTree.insert("matriks", "Matrix");
-        indonesianToEnglishTree.insert("digital", "Digital");
-        indonesianToEnglishTree.insert("tikus", "Mouse");
-    }
-
     private void initializeUI() {
         setLayout(new BorderLayout());
         setBackground(new Color(25, 25, 35));
         setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JPanel loadingPanel = createLoadingPanel();
+        add(loadingPanel, BorderLayout.NORTH);
 
         contentCardLayout = new CardLayout();
         contentPanel = new JPanel(contentCardLayout);
@@ -139,6 +165,29 @@ public class DictionaryPanel extends JPanel {
 
         add(contentPanel, BorderLayout.CENTER);
         contentCardLayout.show(contentPanel, "DICTIONARY");
+        
+        setupAutoSearch();
+    }
+
+    private JPanel createLoadingPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(25, 25, 35));
+        panel.setBorder(new EmptyBorder(5, 20, 5, 20));
+        panel.setVisible(false);
+
+        JLabel loadingLabel = new JLabel("Loading Dictionary...");
+        loadingLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        loadingLabel.setForeground(new Color(100, 180, 255));
+
+        loadingBar = new JProgressBar(0, 100);
+        loadingBar.setForeground(new Color(100, 180, 255));
+        loadingBar.setBackground(new Color(40, 40, 50));
+        loadingBar.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+
+        panel.add(loadingLabel, BorderLayout.NORTH);
+        panel.add(loadingBar, BorderLayout.CENTER);
+
+        return panel;
     }
 
     private JPanel createDictionaryPanel() {
@@ -270,6 +319,34 @@ public class DictionaryPanel extends JPanel {
         return panel;
     }
 
+    private void setupAutoSearch() {
+        autoSearchTimer = new Timer(AUTO_SEARCH_DELAY, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                autoSearchTimer.stop();
+                performAutoSearch();
+            }
+        });
+        autoSearchTimer.setRepeats(false);
+        
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                autoSearchTimer.restart();
+            }
+            
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                autoSearchTimer.restart();
+            }
+            
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                autoSearchTimer.restart();
+            }
+        });
+    }
+
     private void updateWelcomeMessage() {
         if (isEnglishToIndonesian) {
             resultArea.setText("Type the word in English then press ENTER or click the SEARCH button");
@@ -278,7 +355,40 @@ public class DictionaryPanel extends JPanel {
         }
     }
 
+    private void performAutoSearch() {
+        String raw = searchField.getText();
+        if (raw == null) raw = "";
+        String searchText = raw.trim().toLowerCase();
+
+        if (searchText.isEmpty()) {
+            updateWelcomeMessage();
+            return;
+        }
+
+        if (searchText.length() >= 1) {
+            Word wordResult = null;
+            
+            if (isEnglishToIndonesian) {
+                wordResult = englishToIndonesianTree.search(searchText);
+            } else {
+                wordResult = indonesianToEnglishTree.search(searchText);
+            }
+
+            if (wordResult != null) {
+                if (wordResult.hasGimmick()) {
+                    executeGimmick(wordResult.getGimmickType(), searchText);
+                }
+                
+                displayWordResult(wordResult);
+            } else {
+                showPartialMatches(searchText);
+            }
+        }
+    }
+
     private void performSearch() {
+        autoSearchTimer.stop();
+        
         try {
             String raw = searchField.getText();
             if (raw == null) raw = "";
@@ -293,184 +403,122 @@ public class DictionaryPanel extends JPanel {
                 return;
             }
 
+            Word wordResult = null;
+            
             if (isEnglishToIndonesian) {
-                if (indonesianToEnglishTree.search(searchText) != null) {
-                    resultArea.setText("ERROR: Mode English - Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia - English");
-                    return;
-                }
+                wordResult = englishToIndonesianTree.search(searchText);
             } else {
-                if (englishToIndonesianTree.search(searchText) != null) {
-                    resultArea.setText("ERROR: Mode Indonesia - English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English - Indonesia");
-                    return;
+                wordResult = indonesianToEnglishTree.search(searchText);
+            }
+
+            if (wordResult != null) {
+                if (wordResult.hasGimmick()) {
+                    executeGimmick(wordResult.getGimmickType(), searchText);
                 }
-            }
-
-            if (searchText.equals("explosion") || searchText.equals("ledakan") ||
-                searchText.equals("bom") || searchText.equals("complete") ||
-                searchText.equals("finished") || searchText.equals("selesai") ||
-                searchText.equals("master") || searchText.equals("vocab") ||
-                searchText.equals("dictionary") || searchText.equals("kamus")) {
-                ExplosionEffect.triggerExplosion(mainFrame);
-                displayExplosionEffect(searchText);
-                return;
-            }
-
-            if (searchText.equals("mouse") || searchText.equals("tikus")) {
-                showCorruptionEffect();
-                displayCorruptionEffect(searchText);
-                return;
-            }
-
-            if (searchText.equals("blur") || searchText.equals("buram")) {
-                BlurEffect.showBlurEffect(mainFrame);
-                displayBlurEffect(searchText);
-                return;
-            }
-
-            if (searchText.equals("old") || searchText.equals("tua")) { 
-                OldEffect.triggerOldEffect(mainFrame);
-                displayOldEffect(searchText);
-                return;
-            }
-
-            if (searchText.equals("rain") || searchText.equals("hujan")) {
-                MatrixRainEffect.triggerMatrixRain(mainFrame);
-                if (isEnglishToIndonesian && searchText.equals("rain")) {
-                    displaySearchResult("rain", "Hujan");
-                } else if (!isEnglishToIndonesian && searchText.equals("hujan")) {
-                    displaySearchResult("hujan", "Rain");
-                } else {
-                    if (isEnglishToIndonesian) {
-                        resultArea.setText("ERROR: Mode English - Indonesia\nKata '" + searchText + "' adalah kata Indonesia\nSilahkan ubah ke mode Indonesia - English");
-                    } else {
-                        resultArea.setText("ERROR: Mode Indonesia - English\nKata '" + searchText + "' adalah kata Inggris\nSilahkan ubah ke mode English - Indonesia");
-                    }
-                }
-                return;
-            }
-
-            switch (searchText) {
-                case "calculator":
-                case "kalkulator":
-                    contentCardLayout.show(contentPanel, "CALCULATOR");
-                    resultArea.setText("");
-                    return;
-
-                case "game":
-                case "permainan":
-                    contentCardLayout.show(contentPanel, "GAME");
-                    resultArea.setText("");
-                    return;
-
-                case "matrix":
-                case "matriks":
-                case "digital":
-                    MatrixRainEffect.triggerMatrixRain(mainFrame);
-                    if (isEnglishToIndonesian) {
-                        if (searchText.equals("matrix")) displaySearchResult("matrix", "Matriks");
-                        else if (searchText.equals("digital")) displaySearchResult("digital", "Digital");
-                        else displaySearchResult("matriks", "Matrix");
-                    } else {
-                        if (searchText.equals("matriks")) displaySearchResult("matriks", "Matrix");
-                        else if (searchText.equals("digital")) displaySearchResult("digital", "Digital");
-                        else displaySearchResult("matrix", "Matriks");
-                    }
-                    return;
-
-                default:
-                    String meaning = null;
-                    if (isEnglishToIndonesian) {
-                        meaning = englishToIndonesianTree.search(searchText);
-                        if (meaning != null) {
-                            displaySearchResult(searchText, meaning);
-                            return;
-                        }
-                    } else {
-                        meaning = indonesianToEnglishTree.search(searchText);
-                        if (meaning != null) {
-                            displaySearchResult(searchText, meaning);
-                            return;
-                        }
-                    }
-                    displayNotFound(searchText);
+                
+                displayWordResult(wordResult);
+            } else {
+                showPartialMatches(searchText);
             }
         } catch (Exception ex) {
             resultArea.setText("ERROR: Terjadi kesalahan internal. Coba lagi.");
         }
     }
 
-    private void displayExplosionEffect(String searchText) {
-        String word = searchText.toUpperCase();
-        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
-        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String translation = isEnglishToIndonesian ? "Ledakan, Letusan" : "Explosion, Blast";
-        String result = "DICTIONARY\n" +
-                       "Word: " + word + "\n" +
-                       languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + translation;
-        resultArea.setText(result);
-    }
-
-    private void displayCorruptionEffect(String searchText) {
-        String word = searchText.toUpperCase();
-        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
-        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String translation = isEnglishToIndonesian ? "Tikus" : "Mouse";
-        String result = "DICTIONARY\n" +
-                       "Word: " + word + "\n" +
-                       languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + translation;
-        resultArea.setText(result);
-    }
-
-    private void displayBlurEffect(String searchText) {
-        String word = searchText.toUpperCase();
-        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
-        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String translation = isEnglishToIndonesian ? "Buram, Kabur" : "Blurry";
-        String result = "DICTIONARY\n" +
-                       "Word: " + word + "\n" +
-                       languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + translation;
-        resultArea.setText(result);
-    }
-
-    private void displaySearchResult(String searchText, String meaning) {
-        String word = searchText.toUpperCase();
-        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
-        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String result = "DICTIONARY\n" +
-                       "Word: " + word + "\n" +
-                       languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + meaning;
-        resultArea.setText(result);
-    }
-
-    private void displayOldEffect(String searchText) {
-        String word = searchText.toUpperCase();
-        String languageFrom = isEnglishToIndonesian ? "English" : "Indonesian";
-        String languageTo = isEnglishToIndonesian ? "Indonesian" : "English";
-        String translation = isEnglishToIndonesian ? "Kuno, Tua, Umur" : "Old";
-        String result = "DICTIONARY\n" +
-                       "Word: " + word + "\n" +
-                       languageFrom + ": " + searchText + "\n" +
-                       languageTo + ": " + translation;
-        resultArea.setText(result);
-    }
-
-    private void displayNotFound(String searchText) {
-        String word = searchText.toUpperCase();
-        if (isEnglishToIndonesian) {
-            String result = "DICTIONARY\n" +
-                          "Word: " + word + "\n" +
-                          "ERROR: Kata '" + searchText + "' tidak ditemukan dalam kamus";
-            resultArea.setText(result);
-        } else {
-            String result = "DICTIONARY\n" +
-                          "Word: " + word + "\n" +
-                          "ERROR: Word '" + searchText + "' not found in dictionary";
-            resultArea.setText(result);
+    private void showPartialMatches(String searchText) {
+        List<Word> allWords = dictionaryModel.getAllWords();
+        StringBuilder result = new StringBuilder();
+        result.append("Searching for: ").append(searchText).append("\n\n");
+        
+        int count = 0;
+        for (Word word : allWords) {
+            if (isEnglishToIndonesian) {
+                if (word.getEnglish().toLowerCase().contains(searchText)) {
+                    result.append(word.getEnglish()).append(" - ").append(word.getIndonesian()).append("\n");
+                    count++;
+                }
+            } else {
+                if (word.getIndonesian().toLowerCase().contains(searchText)) {
+                    result.append(word.getIndonesian()).append(" - ").append(word.getEnglish()).append("\n");
+                    count++;
+                }
+            }
+            
+            if (count >= 10) {
+                result.append("\n... and more");
+                break;
+            }
         }
+        
+        if (count == 0) {
+            result.append("No matches found.\n");
+            result.append("Try typing more letters or check spelling.");
+        } else {
+            result.append("\nFound ").append(count).append(" matches.");
+        }
+        
+        resultArea.setText(result.toString());
+    }
+
+    private void executeGimmick(String gimmickType, String searchText) {
+        if (gimmickType == null) return;
+        
+        switch (gimmickType) {
+            case "explosion":
+                ExplosionEffect.triggerExplosion(mainFrame);
+                break;
+                
+            case "blur":
+                BlurEffect.showBlurEffect(mainFrame);
+                break;
+                
+            case "matrix":
+                MatrixRainEffect.triggerMatrixRain(mainFrame);
+                break;
+                
+            case "rain":
+                MatrixRainEffect.triggerMatrixRain(mainFrame);
+                break;
+                
+            case "old":
+                OldEffect.triggerOldEffect(mainFrame);
+                break;
+                
+            case "mouse":
+                showCorruptionEffect();
+                break;
+                
+            case "calculator":
+                contentCardLayout.show(contentPanel, "CALCULATOR");
+                break;
+                
+            case "game":
+                contentCardLayout.show(contentPanel, "GAME");
+                break;
+        }
+    }
+
+    private void displayWordResult(Word word) {
+        StringBuilder result = new StringBuilder();
+        
+        if (isEnglishToIndonesian) {
+            result.append("English: ").append(word.getEnglish()).append("\n");
+            result.append("Indonesian: ").append(word.getIndonesian()).append("\n");
+            result.append("Category: ").append(word.getCategory()).append("\n");
+        } else {
+            result.append("Indonesian: ").append(word.getIndonesian()).append("\n");
+            result.append("English: ").append(word.getEnglish()).append("\n");
+            result.append("Category: ").append(word.getCategory()).append("\n");
+        }
+        
+        if (word.hasDefinition()) {
+            result.append("\nEnglish Definition:\n");
+            result.append(word.getDefinitionEn()).append("\n\n");
+            result.append("Indonesian Definition:\n");
+            result.append(word.getDefinitionId()).append("\n");
+        }
+        
+        resultArea.setText(result.toString());
     }
 
     private JPanel createCalculatorPanel() {
@@ -587,7 +635,6 @@ public class DictionaryPanel extends JPanel {
         calcCurrentValue = 0;
         calcCurrentOperator = "";
         calcDisplay.setText("0");
-        currentCalcInput = "";
     }
 
     private void backspaceCalc() {

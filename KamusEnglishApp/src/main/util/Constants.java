@@ -16,9 +16,13 @@ public class Constants {
     public static final Font NORMAL_FONT = new Font("Arial", Font.PLAIN, 14);
     public static final Font BUTTON_FONT = new Font("Arial", Font.BOLD, 14);
     
-    public static final String APP_NAME = "Kamus English App";
-    public static final String VERSION = "1.0";
+    public static final String APP_NAME = "Lexionary - English Indonesian Dictionary";
+    public static final String VERSION = "2.0";
     
     public static final String DICTIONARY_FILE = "src/resources/data/dictionary.txt";
     public static final String CORRUPT_OFFICERS_FILE = "src/resources/data/corrupt_officers.txt";
+    
+    public static final String[] GIMMICK_TYPES = {
+        "explosion", "blur", "matrix", "rain", "old", "mouse", "calculator", "game"
+    };
 }

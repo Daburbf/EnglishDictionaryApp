@@ -6,13 +6,14 @@ import java.awt.*;
 public class MainFrame extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
+    private DictionaryPanel dictionaryPanel;
     
     public MainFrame() {
         initializeUI();
     }
     
     private void initializeUI() {
-        setTitle("English Dictionary");
+        setTitle("Lexionary - English Indonesian Dictionary");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 750);
         setLocationRelativeTo(null);
@@ -28,7 +29,7 @@ public class MainFrame extends JFrame {
         mainPanel.setBackground(new Color(18, 18, 18));
 
         DashboardPanel dashboardPanel = new DashboardPanel(this);
-        DictionaryPanel dictionaryPanel = new DictionaryPanel(this);
+        dictionaryPanel = new DictionaryPanel(this);
         
         mainPanel.add(dashboardPanel, "DASHBOARD");
         mainPanel.add(dictionaryPanel, "DICTIONARY");
