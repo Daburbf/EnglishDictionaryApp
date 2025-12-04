@@ -229,25 +229,55 @@ public class RedBlackTree {
     
     public List<Word> getRecommendations(String prefix) {
         List<Word> recommendations = new ArrayList<>();
-        getRecommendations(root, prefix.toLowerCase(), recommendations);
+        findRecommendationsInOrder(root, prefix.toLowerCase(), recommendations);
         return recommendations;
     }
     
-    private void getRecommendations(Node node, String prefix, List<Word> recommendations) {
-        if (node == NIL || recommendations.size() >= 5) {
+    private void findRecommendationsInOrder(Node node, String prefix, List<Word> recommendations) {
+        if (node == NIL) {
             return;
         }
         
-        if (node.key.startsWith(prefix)) {
+        findRecommendationsInOrder(node.left, prefix, recommendations);
+        
+        if (recommendations.size() < 10 && node.key.startsWith(prefix)) {
             recommendations.add(node.word);
         }
         
-        if (prefix.compareTo(node.key) <= 0) {
-            getRecommendations(node.left, prefix, recommendations);
+        if (recommendations.size() < 10) {
+            findRecommendationsInOrder(node.right, prefix, recommendations);
+        }
+    }
+    
+    public List<Word> getAllWordsInOrder() {
+        List<Word> words = new ArrayList<>();
+        collectInOrder(root, words);
+        return words;
+    }
+    
+    private void collectInOrder(Node node, List<Word> words) {
+        if (node == NIL) {
+            return;
         }
         
-        if (prefix.compareTo(node.key) >= 0 || recommendations.size() < 5) {
-            getRecommendations(node.right, prefix, recommendations);
+        collectInOrder(node.left, words);
+        words.add(node.word);
+        collectInOrder(node.right, words);
+    }
+    
+    public List<String> getAllKeysInOrder() {
+        List<String> keys = new ArrayList<>();
+        collectKeysInOrder(root, keys);
+        return keys;
+    }
+    
+    private void collectKeysInOrder(Node node, List<String> keys) {
+        if (node == NIL) {
+            return;
         }
+        
+        collectKeysInOrder(node.left, keys);
+        keys.add(node.key);
+        collectKeysInOrder(node.right, keys);
     }
 }

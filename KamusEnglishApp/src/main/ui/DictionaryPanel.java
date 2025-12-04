@@ -426,35 +426,29 @@ public class DictionaryPanel extends JPanel {
     }
 
     private void showPartialMatches(String searchText) {
-        List<Word> allWords = dictionaryModel.getAllWords();
+        List<Word> matches;
+        
+        if (isEnglishToIndonesian) {
+            matches = englishToIndonesianTree.getRecommendations(searchText);
+        } else {
+            matches = indonesianToEnglishTree.getRecommendations(searchText);
+        }
+        
         StringBuilder result = new StringBuilder();
         result.append("Searching for: ").append(searchText).append("\n\n");
         
-        int count = 0;
-        for (Word word : allWords) {
-            if (isEnglishToIndonesian) {
-                if (word.getEnglish().toLowerCase().contains(searchText)) {
-                    result.append(word.getEnglish()).append(" - ").append(word.getIndonesian()).append("\n");
-                    count++;
-                }
-            } else {
-                if (word.getIndonesian().toLowerCase().contains(searchText)) {
-                    result.append(word.getIndonesian()).append(" - ").append(word.getEnglish()).append("\n");
-                    count++;
-                }
-            }
-            
-            if (count >= 10) {
-                result.append("\n... and more");
-                break;
-            }
-        }
-        
-        if (count == 0) {
+        if (matches.isEmpty()) {
             result.append("No matches found.\n");
             result.append("Try typing more letters or check spelling.");
         } else {
-            result.append("\nFound ").append(count).append(" matches.");
+            for (Word word : matches) {
+                if (isEnglishToIndonesian) {
+                    result.append(word.getEnglish()).append(" - ").append(word.getIndonesian()).append("\n");
+                } else {
+                    result.append(word.getIndonesian()).append(" - ").append(word.getEnglish()).append("\n");
+                }
+            }
+            result.append("\nFound ").append(matches.size()).append(" matches.");
         }
         
         resultArea.setText(result.toString());

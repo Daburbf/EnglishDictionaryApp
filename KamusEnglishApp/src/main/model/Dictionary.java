@@ -1001,27 +1001,6 @@ public class Dictionary {
         words.add(new Word("young", "muda", "adjective"));
         words.add(new Word("your", "kamu", "pronoun"));
         words.add(new Word("yourself", "dirimu sendiri", "pronoun"));
-
-        words.add(new Word("airport", "bandara", "noun",
-            "A complex of runways and buildings for the takeoff, landing, and maintenance of civil aircraft, with facilities for passengers",
-            "Kompleks landasan pacu dan bangunan untuk lepas landas, mendarat, dan pemeliharaan pesawat sipil, dengan fasilitas untuk penumpang",
-            null));
-            
-        words.add(new Word("airplane", "pesawat terbang", "noun",
-            "A powered flying vehicle with fixed wings and a weight greater than that of the air it displaces",
-            "Kendaraan terbang yang bertenaga dengan sayap tetap dan berat lebih besar dari udara yang dipindahkannya, digunakan untuk mengangkut orang atau barang",
-            null));
-            
-        words.add(new Word("aircraft", "pesawat", "noun",
-            "Any machine capable of flying, including airplanes, helicopters, and gliders",
-            "Mesin apa pun yang mampu terbang, termasuk pesawat terbang, helikopter, dan glider",
-            null));
-            
-        words.add(new Word("airliner", "pesawat penumpang", "noun",
-            "A large airplane for transporting passengers and cargo",
-            "Pesawat besar untuk mengangkut penumpang dan kargo",
-            null));
-
         words.add(new Word("explosion", "ledakan", "noun", "", "", "explosion"));
         words.add(new Word("blur", "buram", "adjective", "", "", "blur"));
         words.add(new Word("matrix", "matriks", "noun", "", "", "matrix"));
